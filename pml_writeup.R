@@ -9,6 +9,7 @@ library(randomForest)
 path.dir <- getwd()
 path.train <- paste0(path.dir,"/data/pml-training.csv")
 path.test <- paste0(path.dir,"/data/pml-testing.csv")
+path.results <- paste0(path.dir,"/results/")
 
 # Read Data
 
@@ -58,4 +59,19 @@ prediction2 <- predict(model2, subTest, type = "class")
 
 # Test results on subTest data set:
 cMat2<-confusionMatrix(prediction2, subTest$classe)
+
+
+# Final prediction with test data set
+predictionF < - predict(model2,test, type ="class")
+
+# Create Coursera submission files
+
+pml_write_files = function(x, pathdir){
+    n = length(x)
+    for(i in 1:n){
+        filename = paste0("problem_id_",i,".txt")
+        write.table(x[i],file=file.path(pathdir, filename),quote=FALSE,row.names=FALSE,col.names=FALSE)
+    }
+}
+pml_write_files(predictionF, path.results)
 
