@@ -248,12 +248,12 @@ subTest &lt;- train[-dataPart, ]</p>
 Confusion Matrix and Statistics
 
   Reference
-PredictionABCDE
- A 1394  177   25   76   59
- B  107  727  170   62  166
- C   88   97  726  115   80
- D   72   93  103  697   99
- E   13   45    2   14  678
+Prediction A    B    C    D    E
+ A      1394  177   25   76   59
+ B       107  727  170   62  166
+ C        88   97  726  115   80
+ D        72   93  103  697   99
+ E        13   45    2   14  678
 
 Overall Statistics
 
@@ -305,9 +305,9 @@ P-Value [Acc &gt; NIR] : &lt; 2.2e-16
 
 <p>#Decision
 From our models the random forest algorithm performed much better than decision trees.
-Accuracy for RF was 0.09949 and the accurace fpr DT was 0.7174 (both with 95% CI).</p>
+Accuracy for RF was 0.09949 and the accuracy of DT was 0.7174 (both with 95% CI).</p>
 
-<p>For our final prediction we choose the random forest model.</p>
+<p><strong>For our final prediction we choose the random forest model.</strong></p>
 
 <p>The expected out-of-sample error is estimated at 0.005, or 0.5%. The expected out-of-sample error is calculated as 1 - accuracy for predictions made against the cross-validation set.</p>
 
