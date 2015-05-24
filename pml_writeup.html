@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Goal</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h1>Goal</h1>
+
+<p>Predict the classe variable of the testing data set.</p>
+
+<h1>Code and Results</h1>
+
+<h1>Libraries</h1>
+
+<p>Loading selected libraries.</p>
+
+<pre><code>library(caret)
+library(rpart)
+library(randomForest)
+</code></pre>
+
+<h1>Preparation</h1>
+
+<p>Get local working directory path and set data path.</p>
+
+<pre><code>path.dir &lt;- getwd()
+path.train &lt;- paste0(path.dir,&quot;/data/pml-training.csv&quot;)
+path.test &lt;- paste0(path.dir,&quot;/data/pml-testing.csv&quot;) 
+path.results &lt;- paste0(path.dir,&quot;/results/&quot;)
+</code></pre>
+
+<h1>Read Data</h1>
+
+<p>Loading the training data set into my R session replacing all missing with &ldquo;NA&rdquo;</p>
+
+<pre><code>train &lt;- read.csv(path.train, na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;, &quot;&quot;))
+test &lt;- read.csv(path.test, na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;, &quot;&quot;))
+</code></pre>
+
+<h1>Cleaning Data</h1>
+
+<p>There are a lot of missing values in data remove all columns with sum(NA)=0</p>
+
+<pre><code>train&lt;-train[,colSums(is.na(train)) == 0]
+test &lt;-test[,colSums(is.na(test)) == 0]
+</code></pre>
+
+<p>Some columns are irrelevant for this assigment remove col 1-7</p>
+
+<pre><code>train   &lt;-train[,-c(1:7)]
+test &lt;-test[,-c(1:7)]
+</code></pre>
+
+<h1>Check visually training data</h1>
+
+<p>train.tab &lt;- table(train$classe)</p>
+
+<pre><code>   A    B   C   D   E 
+5580 3797 3422 3216 3607 
+</code></pre>
+
+<h1>Preprocessing</h1>
+
+<p>Partionating traingdata for cross-value validation from training set 70% subtrain, 30% subtest on train$class</p>
+
+<pre><code>set.seed(777)
+dataPart &lt;- createDataPartition(train$classe, p = 0.7, list = FALSE)
+</code></pre>
+
+<p>subTrain &lt;- train[dataPart, ]
+subTest &lt;- train[-dataPart, ]</p>
+
+<h1>First Prediction: Decision Tree</h1>
+
+<p>We starting with Decision Tree from the rpart Package:</p>
+
+<pre><code>model1 &lt;- rpart(classe ~ ., data=subTrain, method=&quot;class&quot;)
+</code></pre>
+
+<p>Our predicting is :</p>
+
+<pre><code>prediction1 &lt;- predict(model1, subTest, type = &quot;class&quot;)
+</code></pre>
+
+<p>With this results on subTest data set:</p>
+
+<pre><code>cMat1&lt;-confusionMatrix(prediction1, subTest$classe)
+
+Confusion Matrix and Statistics
+
+  Reference
+PredictionABCDE
+ A 1394  177   25   76   59
+ B  107  727  170   62  166
+ C   88   97  726  115   80
+ D   72   93  103  697   99
+ E   13   45    2   14  678
+
+Overall Statistics
+
+           Accuracy : 0.7174  
+             95% CI : (0.7057, 0.7289)
+No Information Rate : 0.2845  
+P-Value [Acc &gt; NIR] : &lt; 2.2e-16   
+
+                 Kappa : 0.6423  
+Mcnemar&#39;s Test P-Value : &lt; 2.2e-16   
+</code></pre>
+
+<h1>Second Prediction: random Forests</h1>
+
+<p>Next model are random Forests:</p>
+
+<pre><code>model2 &lt;- randomForest(classe ~. , data=subTrain, method=&quot;class&quot;)
+</code></pre>
+
+<p>Our predicting is:</p>
+
+<pre><code>prediction2 &lt;- predict(model2, subTest, type = &quot;class&quot;)
+</code></pre>
+
+<p>And our results on subTest data set are:</p>
+
+<pre><code>cMat2&lt;-confusionMatrix(prediction2, subTest$classe)
+
+Confusion Matrix and Statistics
+
+  Reference
+Prediction A    B    C    D    E
+ A      1672    6    0    0    0
+ B         0 1130    4    0    0
+ C         2    3 1022   10    2
+ D         0    0    0  954    3
+ E         0    0    0    0 1077
+
+Overall Statistics
+
+   Accuracy         : 0.9949  
+ 95% CI             : (0.9927, 0.9966)
+No Information Rate : 0.2845  
+P-Value [Acc &gt; NIR] : &lt; 2.2e-16   
+
+  Kappa                 : 0.9936  
+ Mcnemar&#39;s Test P-Value : NA  
+</code></pre>
+
+<p>#Decision
+From our models the random forest algorithm performed much better than decision trees.
+Accuracy for RF was 0.09949 and the accurace fpr DT was 0.7174 (both with 95% CI).</p>
+
+<p>For our final prediction we choose the random forest model.</p>
+
+<p>The expected out-of-sample error is estimated at 0.005, or 0.5%. The expected out-of-sample error is calculated as 1 - accuracy for predictions made against the cross-validation set.</p>
+
+<p>#Submission
+Final prediction with test data set (part of the assigment):</p>
+
+<pre><code>predictionF &lt; - predict(model2,test, type =&quot;class&quot;)
+</code></pre>
+
+<p>Create Coursera submission files</p>
+
+<pre><code>pml_write_files = function(x, pathdir){
+n = length(x)
+for(i in 1:n){
+filename = paste0(&quot;problem_id_&quot;,i,&quot;.txt&quot;)
+write.table(x[i],file=file.path(pathdir, filename),quote=FALSE,row.names=FALSE,col.names=FALSE)
+}
+}
+pml_write_files(predictionF, path.results)
+</code></pre>
+
+<h1>Conclusion</h1>
+
+<p>The Random Forrest algorithm predict very well our assigment.    </p>
+
+</body>
+
+</html>

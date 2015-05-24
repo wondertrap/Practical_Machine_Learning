@@ -67,7 +67,7 @@ predictionF < - predict(model2,test, type ="class")
 # Create Coursera submission files
 
 pml_write_files = function(x, pathdir){
-    n = length(x)
+    n = length(x)    
     for(i in 1:n){
         filename = paste0("problem_id_",i,".txt")
         write.table(x[i],file=file.path(pathdir, filename),quote=FALSE,row.names=FALSE,col.names=FALSE)
